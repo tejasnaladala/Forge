@@ -17,7 +17,12 @@ COPY pyproject.toml .
 COPY README.md .
 RUN pip install --no-cache-dir -e .
 
-RUN mkdir -p forge_workspace .forge
+# Create non-root user and set ownership
+RUN useradd -m -r -s /bin/false forge && \
+    mkdir -p forge_workspace .forge && \
+    chown -R forge:forge /app
+
+USER forge
 
 EXPOSE 8626
 

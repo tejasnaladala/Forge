@@ -4,6 +4,7 @@ import json
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from forge.api.auth import require_ws_api_key
 from forge.core.events import event_bus
 from forge.core.types import ForgeEvent
 
@@ -35,6 +36,13 @@ async def _broadcast(event: ForgeEvent) -> None:
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     global _broadcast_registered
+
+    # Authenticate before accepting the connection
+    try:
+        await require_ws_api_key(websocket)
+    except Exception:
+        return
+
     await websocket.accept()
     _connections.append(websocket)
 

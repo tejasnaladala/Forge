@@ -8,9 +8,35 @@ from pathlib import Path
 WORKSPACE = Path("./forge_workspace")
 
 
+def _safe_resolve(path: str) -> tuple[Path, str | None]:
+    """Resolve a path and verify it stays within WORKSPACE.
+
+    Returns (resolved_path, error_message). error_message is None on success.
+    """
+    WORKSPACE.mkdir(parents=True, exist_ok=True)
+    workspace_resolved = WORKSPACE.resolve()
+
+    # Reject absolute paths outright
+    if os.path.isabs(path):
+        return Path(), "Error: absolute paths are not allowed. Use paths relative to the workspace."
+
+    target = (WORKSPACE / path).resolve()
+
+    # Ensure the resolved target is within the workspace
+    try:
+        target.relative_to(workspace_resolved)
+    except ValueError:
+        return Path(), f"Error: path {path!r} escapes the workspace directory. Path traversal is not allowed."
+
+    return target, None
+
+
 def _sync_file_op(operation: str, path: str, content: str) -> str:
     WORKSPACE.mkdir(parents=True, exist_ok=True)
-    target = WORKSPACE / path
+
+    target, error = _safe_resolve(path)
+    if error:
+        return error
 
     if operation == "read":
         if not target.is_file():
@@ -18,7 +44,14 @@ def _sync_file_op(operation: str, path: str, content: str) -> str:
         return target.read_text(encoding="utf-8")
 
     elif operation == "write":
-        target.parent.mkdir(parents=True, exist_ok=True)
+        # Re-validate parent directory stays in workspace
+        parent = target.parent
+        workspace_resolved = WORKSPACE.resolve()
+        try:
+            parent.relative_to(workspace_resolved)
+        except ValueError:
+            return "Error: write target parent escapes the workspace directory."
+        parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
         return f"Written {len(content)} bytes to {path}"
 

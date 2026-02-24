@@ -4,6 +4,8 @@ import json
 
 import httpx
 
+from forge.api.security import validate_url
+
 
 async def http_request(
     method: str = "GET",
@@ -13,10 +15,16 @@ async def http_request(
     timeout: int = 30,
 ) -> str:
     """Send an HTTP request and return the response."""
+    # Validate URL to prevent SSRF attacks
+    try:
+        url = validate_url(url)
+    except ValueError as e:
+        return json.dumps({"error": f"SSRF protection: {e}"})
+
     headers = headers or {}
 
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=float(timeout)) as client:
+        async with httpx.AsyncClient(follow_redirects=False, timeout=float(timeout)) as client:
             kwargs = {"headers": headers}
 
             if method.upper() in ("POST", "PUT", "PATCH") and body:
@@ -26,6 +34,15 @@ async def http_request(
                     kwargs["content"] = body
 
             response = await client.request(method.upper(), url, **kwargs)
+
+            # If redirect, validate the redirect target before following
+            if response.is_redirect:
+                redirect_url = str(response.headers.get("location", ""))
+                try:
+                    validate_url(redirect_url)
+                except ValueError as e:
+                    return json.dumps({"error": f"SSRF protection on redirect: {e}"})
+                response = await client.request("GET", redirect_url, **{"headers": headers})
 
             response_body = response.text[:5000]
             result = {

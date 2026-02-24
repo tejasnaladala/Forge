@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+import re
 
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field, field_validator
+
+from forge.api.auth import require_api_key
 from forge.core.parser import ForgefileParser
 from forge.core.runtime import AgentRuntime
 from forge.core.types import AgentConfig, MemoryConfig, StepType
@@ -12,17 +15,19 @@ from forge.tools.executor import ToolExecutor
 
 router = APIRouter(prefix="/api/v1/agents", tags=["agents"])
 
+_VALID_NAME = re.compile(r"^[a-zA-Z0-9_\-]{1,64}$")
+
 
 class CreateAgentRequest(BaseModel):
     config: dict
 
 
 class RunAgentRequest(BaseModel):
-    input: str
+    input: str = Field(max_length=100_000)
 
 
 @router.get("/")
-async def list_agents(request: Request):
+async def list_agents(request: Request, _key: str = Depends(require_api_key)):
     registry = request.app.state.agent_registry
     agents = []
     for config in registry.list_all():
@@ -36,7 +41,7 @@ async def list_agents(request: Request):
 
 
 @router.post("/")
-async def create_agent(request: Request, body: CreateAgentRequest):
+async def create_agent(request: Request, body: CreateAgentRequest, _key: str = Depends(require_api_key)):
     parser = ForgefileParser()
     config = parser._parse_agent(body.config)
 
@@ -59,7 +64,10 @@ async def create_agent(request: Request, body: CreateAgentRequest):
 
 
 @router.get("/{name}")
-async def get_agent(request: Request, name: str):
+async def get_agent(request: Request, name: str, _key: str = Depends(require_api_key)):
+    if not _VALID_NAME.match(name):
+        return JSONResponse(status_code=400, content={"error": "Invalid agent name."})
+
     registry = request.app.state.agent_registry
     config = registry.get(name)
     if config is None:
@@ -78,7 +86,10 @@ async def get_agent(request: Request, name: str):
 
 
 @router.post("/{name}/run")
-async def run_agent(request: Request, name: str, body: RunAgentRequest):
+async def run_agent(request: Request, name: str, body: RunAgentRequest, _key: str = Depends(require_api_key)):
+    if not _VALID_NAME.match(name):
+        return JSONResponse(status_code=400, content={"error": "Invalid agent name."})
+
     orchestration = request.app.state.orchestration
     try:
         result = await orchestration.run_agent(name, body.input)

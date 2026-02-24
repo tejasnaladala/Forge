@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import time
 import uuid
 from typing import Any
@@ -37,22 +36,41 @@ class ModelRouter:
     def __init__(self) -> None:
         self.cost_tracker = CostTracker()
         self._client = httpx.AsyncClient(timeout=120.0)
-        self._configure_api_keys()
+        self._api_keys = self._load_api_keys()
 
-    def _configure_api_keys(self) -> None:
-        key_map = {
-            "OPENAI_API_KEY": settings.openai_api_key,
-            "ANTHROPIC_API_KEY": settings.anthropic_api_key,
-            "GOOGLE_AI_API_KEY": settings.google_ai_api_key,
-            "GEMINI_API_KEY": settings.google_ai_api_key,
-            "DEEPSEEK_API_KEY": settings.deepseek_api_key,
-            "GROQ_API_KEY": settings.groq_api_key,
-            "TOGETHER_API_KEY": settings.together_api_key,
-            "TOGETHERAI_API_KEY": settings.together_api_key,
+    def _load_api_keys(self) -> dict[str, str]:
+        """Load API keys from settings into a private map instead of os.environ."""
+        key_map = {}
+        if settings.openai_api_key:
+            key_map["OPENAI_API_KEY"] = settings.openai_api_key
+        if settings.anthropic_api_key:
+            key_map["ANTHROPIC_API_KEY"] = settings.anthropic_api_key
+        if settings.google_ai_api_key:
+            key_map["GOOGLE_AI_API_KEY"] = settings.google_ai_api_key
+            key_map["GEMINI_API_KEY"] = settings.google_ai_api_key
+        if settings.deepseek_api_key:
+            key_map["DEEPSEEK_API_KEY"] = settings.deepseek_api_key
+        if settings.groq_api_key:
+            key_map["GROQ_API_KEY"] = settings.groq_api_key
+        if settings.together_api_key:
+            key_map["TOGETHER_API_KEY"] = settings.together_api_key
+            key_map["TOGETHERAI_API_KEY"] = settings.together_api_key
+        return key_map
+
+    def _get_api_key_for_provider(self, provider: ModelProvider) -> str | None:
+        """Get the API key for a given provider from the private key map."""
+        provider_key_map = {
+            ModelProvider.OPENAI: "OPENAI_API_KEY",
+            ModelProvider.ANTHROPIC: "ANTHROPIC_API_KEY",
+            ModelProvider.GOOGLE: "GOOGLE_AI_API_KEY",
+            ModelProvider.DEEPSEEK: "DEEPSEEK_API_KEY",
+            ModelProvider.GROQ: "GROQ_API_KEY",
+            ModelProvider.TOGETHER: "TOGETHER_API_KEY",
         }
-        for env_var, value in key_map.items():
-            if value:
-                os.environ[env_var] = value
+        env_var = provider_key_map.get(provider)
+        if env_var:
+            return self._api_keys.get(env_var)
+        return None
 
     async def complete(
         self,
@@ -115,8 +133,10 @@ class ModelRouter:
             "temperature": config.temperature,
             "max_tokens": config.max_tokens,
         }
-        if config.api_key:
-            kwargs["api_key"] = config.api_key
+        # Pass API key directly instead of relying on os.environ
+        api_key = config.api_key or self._get_api_key_for_provider(config.provider)
+        if api_key:
+            kwargs["api_key"] = api_key
         if config.base_url:
             kwargs["api_base"] = config.base_url
         if tools:

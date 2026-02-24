@@ -1,18 +1,28 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+import re
+
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from forge.api.auth import require_api_key
 
 router = APIRouter(prefix="/api/v1/sessions", tags=["sessions"])
 
+_VALID_NAME = re.compile(r"^[a-zA-Z0-9_\-]{1,64}$")
+_VALID_SESSION_ID = re.compile(r"^[a-fA-F0-9\-]{1,64}$")
+
 
 class MessageRequest(BaseModel):
-    message: str
+    message: str = Field(max_length=100_000)
 
 
 @router.get("/{agent_name}")
-async def list_sessions(request: Request, agent_name: str):
+async def list_sessions(request: Request, agent_name: str, _key: str = Depends(require_api_key)):
+    if not _VALID_NAME.match(agent_name):
+        return JSONResponse(status_code=400, content={"error": "Invalid agent name."})
+
     runtime = request.app.state.orchestration.get_runtime(agent_name)
     if runtime is None:
         return JSONResponse(status_code=404, content={"error": f"Agent '{agent_name}' not found"})
@@ -30,7 +40,10 @@ async def list_sessions(request: Request, agent_name: str):
 
 
 @router.post("/{agent_name}/new")
-async def create_session(request: Request, agent_name: str):
+async def create_session(request: Request, agent_name: str, _key: str = Depends(require_api_key)):
+    if not _VALID_NAME.match(agent_name):
+        return JSONResponse(status_code=400, content={"error": "Invalid agent name."})
+
     runtime = request.app.state.orchestration.get_runtime(agent_name)
     if runtime is None:
         return JSONResponse(status_code=404, content={"error": f"Agent '{agent_name}' not found"})
@@ -40,7 +53,12 @@ async def create_session(request: Request, agent_name: str):
 
 
 @router.post("/{agent_name}/{session_id}/message")
-async def send_message(request: Request, agent_name: str, session_id: str, body: MessageRequest):
+async def send_message(request: Request, agent_name: str, session_id: str, body: MessageRequest, _key: str = Depends(require_api_key)):
+    if not _VALID_NAME.match(agent_name):
+        return JSONResponse(status_code=400, content={"error": "Invalid agent name."})
+    if not _VALID_SESSION_ID.match(session_id):
+        return JSONResponse(status_code=400, content={"error": "Invalid session ID."})
+
     runtime = request.app.state.orchestration.get_runtime(agent_name)
     if runtime is None:
         return JSONResponse(status_code=404, content={"error": f"Agent '{agent_name}' not found"})

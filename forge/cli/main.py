@@ -172,14 +172,18 @@ async def _start_server(forgefile, port):
             agent_registry.register(config)
             console.print(f"[green]Registered agent:[/green] {name}")
 
+    from forge.config import settings as forge_settings
+
+    host = forge_settings.host
+
     console.print(Panel(
-        f"Server starting on http://0.0.0.0:{port}\n"
+        f"Server starting on http://{host}:{port}\n"
         f"API docs at http://localhost:{port}/docs",
         title="Forge Server",
         border_style="green",
     ))
 
-    config = uvicorn.Config(app, host="0.0.0.0", port=port, log_level="info")
+    config = uvicorn.Config(app, host=host, port=port, log_level="info")
     server = uvicorn.Server(config)
     await server.serve()
 
