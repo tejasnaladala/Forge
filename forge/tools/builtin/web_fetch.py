@@ -32,9 +32,25 @@ class _TextExtractor(HTMLParser):
 
 async def fetch(url: str, max_length: int = 10000) -> str:
     """Fetch a URL and return its extracted text content."""
+    # Validate URL to prevent SSRF attacks
+    from forge.api.security import validate_url
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+        url = validate_url(url)
+    except ValueError as e:
+        return f"SSRF protection: {e}"
+
+    try:
+        async with httpx.AsyncClient(follow_redirects=False, timeout=30.0) as client:
             response = await client.get(url)
+
+            # Validate redirect targets
+            if response.is_redirect:
+                redirect_url = str(response.headers.get("location", ""))
+                try:
+                    validate_url(redirect_url)
+                except ValueError as e:
+                    return f"SSRF protection on redirect: {e}"
+                response = await client.get(redirect_url)
             content_type = response.headers.get("content-type", "")
 
             if "html" in content_type:

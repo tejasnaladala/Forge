@@ -4,9 +4,11 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from jinja2 import Template
+from jinja2.sandbox import SandboxedEnvironment
 
 from forge.core.types import AgentConfig, MemoryConfig, ModelConfig, ModelProvider, ToolConfig
+
+_jinja_env = SandboxedEnvironment()
 
 
 PROVIDER_INFERENCE = {
@@ -83,10 +85,21 @@ class ForgefileParser:
         if isinstance(prompt, str):
             if prompt.startswith("file:"):
                 prompt_path = Path(prompt[5:].strip())
-                if prompt_path.is_file():
-                    prompt = prompt_path.read_text(encoding="utf-8")
+                # Block absolute paths and path traversal
+                if prompt_path.is_absolute():
+                    raise ValueError(f"Absolute paths not allowed in system_prompt file: directive: {prompt_path}")
+                resolved = prompt_path.resolve()
+                cwd = Path.cwd().resolve()
+                try:
+                    resolved.relative_to(cwd)
+                except ValueError:
+                    raise ValueError(f"Path traversal not allowed in system_prompt file: directive: {prompt_path}")
+                if resolved.is_file():
+                    prompt = resolved.read_text(encoding="utf-8")
             if "{{" in prompt:
-                prompt = Template(prompt).render()
+                # Use sandboxed Jinja2 environment to prevent SSTI
+                template = _jinja_env.from_string(prompt)
+                prompt = template.render()
         kwargs["system_prompt"] = prompt
 
         # Parse tools

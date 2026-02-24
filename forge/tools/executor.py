@@ -19,11 +19,20 @@ class ToolExecutor:
         if tool is None:
             raise ValueError(f"Tool not found: {tool_name}")
 
+        # Validate argument types -- only allow str, int, float, bool, list, dict, None
+        sanitized = {}
+        for key, value in arguments.items():
+            if not isinstance(key, str):
+                raise ValueError(f"Tool argument key must be a string, got {type(key).__name__}")
+            if value is not None and not isinstance(value, (str, int, float, bool, list, dict)):
+                raise ValueError(f"Tool argument '{key}' has unsupported type {type(value).__name__}")
+            sanitized[key] = value
+
         logger.info("tool_execute", tool=tool_name, session_id=session_id)
 
         try:
             result = await asyncio.wait_for(
-                tool.func(**arguments),
+                tool.func(**sanitized),
                 timeout=tool.timeout,
             )
         except asyncio.TimeoutError:

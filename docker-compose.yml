@@ -4,12 +4,13 @@ services:
   forge:
     build: .
     ports:
-      - "8626:8626"
+      - "127.0.0.1:8626:8626"
     volumes:
       - ./forgefile.yaml:/app/forgefile.yaml:ro
-      - ./.env:/app/.env:ro
       - forge-workspace:/app/forge_workspace
       - forge-data:/app/.forge
+    env_file:
+      - .env
     depends_on:
       - redis
     networks:
@@ -18,7 +19,7 @@ services:
   dashboard:
     build: ./dashboard
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8626
     depends_on:
@@ -28,8 +29,10 @@ services:
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    command: redis-server --requirepass "${REDIS_PASSWORD:-changeme}" --maxmemory 256mb --maxmemory-policy allkeys-lru
+    # Not exposed to host -- only accessible within the Docker network
+    expose:
+      - "6379"
     volumes:
       - redis-data:/data
     networks:
