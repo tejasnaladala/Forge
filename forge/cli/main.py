@@ -16,17 +16,17 @@ console = Console()
 @click.group()
 @click.version_option(version=__version__, prog_name="forge")
 def cli():
-    """Forge — The Universal AI Agent Runtime."""
+    """Forge -- universal AI agent runtime."""
     pass
 
 
 @cli.command()
 @click.argument("input_text", required=False)
-@click.option("-a", "--agent", default=None, help="Agent name from forgefile")
-@click.option("-m", "--model", default=None, help="Model override (e.g. gpt-4o, ollama/llama3.2:3b)")
-@click.option("-f", "--file", "forgefile", default="forgefile.yaml", help="Forgefile path")
+@click.option("-a", "--agent", default=None, help="Agent name from the forgefile.")
+@click.option("-m", "--model", default=None, help="Override the model (e.g., gpt-4o, ollama/llama3.2:3b).")
+@click.option("-f", "--file", "forgefile", default="forgefile.yaml", help="Path to the forgefile.")
 def run(input_text, agent, model, forgefile):
-    """Run an agent with a prompt."""
+    """Execute an agent with the given prompt."""
     asyncio.run(_run_agent(input_text, agent, model, forgefile))
 
 
@@ -120,10 +120,10 @@ async def _run_agent(input_text, agent_name, model_override, forgefile):
 
 
 @cli.command()
-@click.option("-f", "--file", "forgefile", default="forgefile.yaml", help="Forgefile path")
-@click.option("-p", "--port", default=8626, help="Server port")
+@click.option("-f", "--file", "forgefile", default="forgefile.yaml", help="Path to the forgefile.")
+@click.option("-p", "--port", default=8626, help="Port for the API server.")
 def up(forgefile, port):
-    """Start agents from forgefile (like docker compose up)."""
+    """Start all agents from the forgefile and launch the API server."""
     asyncio.run(_start_server(forgefile, port))
 
 
@@ -186,7 +186,7 @@ async def _start_server(forgefile, port):
 
 @cli.command()
 def init():
-    """Create a template forgefile.yaml."""
+    """Generate a default forgefile.yaml in the current directory."""
     template = """agent:
   name: my-agent
   model: claude-sonnet-4-20250514
@@ -216,7 +216,7 @@ def init():
 
 @cli.command()
 def models():
-    """List available models."""
+    """List available models across all configured providers."""
     asyncio.run(_list_models())
 
 
@@ -242,9 +242,9 @@ async def _list_models():
 
 
 @cli.command()
-@click.option("-p", "--port", default=8626, help="Server port")
+@click.option("-p", "--port", default=8626, help="Port for the API server.")
 def server(port):
-    """Start the API server."""
+    """Start the REST API server."""
     asyncio.run(_start_server("forgefile.yaml", port))
 
 

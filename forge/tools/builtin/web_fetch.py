@@ -31,7 +31,7 @@ class _TextExtractor(HTMLParser):
 
 
 async def fetch(url: str, max_length: int = 10000) -> str:
-    """Fetch a URL and return its text content."""
+    """Fetch a URL and return its extracted text content."""
     try:
         async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
             response = await client.get(url)
@@ -53,12 +53,12 @@ def register_tools(registry) -> None:
     registry.register(
         name="web_fetch",
         func=fetch,
-        description="Fetch a URL and return its text content. Strips HTML tags for readability.",
+        description="Fetch a URL and return its extracted text content. HTML tags are stripped for readability.",
         parameters={
             "type": "object",
             "properties": {
-                "url": {"type": "string", "description": "The URL to fetch"},
-                "max_length": {"type": "integer", "description": "Maximum characters to return", "default": 10000},
+                "url": {"type": "string", "description": "The URL to fetch."},
+                "max_length": {"type": "integer", "description": "Maximum characters to return.", "default": 10000},
             },
             "required": ["url"],
         },

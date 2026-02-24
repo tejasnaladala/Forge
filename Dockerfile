@@ -1,3 +1,6 @@
+# Forge API Server
+# Builds the Forge runtime and starts the API server on port 8626.
+
 FROM python:3.12-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \

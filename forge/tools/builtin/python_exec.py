@@ -9,7 +9,7 @@ WORKSPACE = Path("./forge_workspace")
 
 
 async def execute_python(code: str, timeout: int = 30) -> str:
-    """Execute Python code and return the output."""
+    """Execute Python code in the workspace directory and return the output."""
     WORKSPACE.mkdir(parents=True, exist_ok=True)
 
     tmp_file = None
@@ -56,12 +56,12 @@ def register_tools(registry) -> None:
     registry.register(
         name="python_exec",
         func=execute_python,
-        description="Execute Python code and return the output. Code runs in the workspace directory.",
+        description="Execute Python code in the workspace directory and return the output.",
         parameters={
             "type": "object",
             "properties": {
-                "code": {"type": "string", "description": "Python code to execute"},
-                "timeout": {"type": "integer", "description": "Timeout in seconds", "default": 30},
+                "code": {"type": "string", "description": "The Python code to execute."},
+                "timeout": {"type": "integer", "description": "Timeout in seconds.", "default": 30},
             },
             "required": ["code"],
         },

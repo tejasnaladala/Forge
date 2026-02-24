@@ -1,6 +1,6 @@
 # Contributing to Forge
 
-Thank you for your interest in contributing to Forge. This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to Forge. This document describes the development workflow, coding standards, and contribution process.
 
 ---
 
@@ -12,28 +12,13 @@ All contributors are expected to engage respectfully and constructively. Maintai
 
 ## Reporting Issues
 
-When reporting a bug or requesting a feature, open an issue on the [GitHub issue tracker](https://github.com/nautilus4707/Forge/issues) and include the following information:
+To report a bug or request a feature, open an issue on the [GitHub issue tracker](https://github.com/nautilus4707/Forge/issues). Include the following information:
 
 - A clear, descriptive title.
 - Steps to reproduce the issue (for bugs).
-- Expected behavior and actual behavior.
-- Python version, operating system, and Forge version.
+- Expected behavior and observed behavior.
+- Python version, operating system, and Forge version (`forge --version`).
 - Relevant configuration (forgefile, environment variables) with sensitive values redacted.
-
----
-
-## Submitting Changes
-
-### Pull Request Process
-
-1. Create a feature branch from `master`.
-2. Implement your changes with appropriate test coverage.
-3. Ensure all tests pass: `pytest tests/ -v`.
-4. Format code: `ruff format forge/ tests/`.
-5. Verify linting: `ruff check forge/`.
-6. Submit a pull request with a clear description of the changes and their motivation.
-
-Pull requests should be focused on a single concern. Avoid combining unrelated changes in a single pull request.
 
 ---
 
@@ -64,19 +49,13 @@ Copy the example environment file and configure at least one provider API key:
 cp .env.example .env
 ```
 
-Edit `.env` and set the appropriate values. See `.env.example` for all supported variables.
+Edit `.env` and set the appropriate values. Refer to `.env.example` for the full list of supported variables.
 
 ### Running Tests
 
 ```bash
 pytest tests/ -v
 ```
-
----
-
-## Coding Standards
-
-Forge uses [Ruff](https://docs.astral.sh/ruff/) for linting and formatting.
 
 ### Linting
 
@@ -90,20 +69,43 @@ ruff check forge/
 ruff format forge/ tests/
 ```
 
-All submitted code must pass both linting and formatting checks.
+---
+
+## Submitting Changes
+
+### Pull Request Process
+
+1. Create a feature branch from `master`.
+2. Implement changes with appropriate test coverage.
+3. Verify all tests pass: `pytest tests/ -v`.
+4. Format code: `ruff format forge/ tests/`.
+5. Verify linting: `ruff check forge/`.
+6. Submit a pull request with a clear description of the changes and their motivation.
+
+Pull requests should be focused on a single concern. Avoid combining unrelated changes in one pull request.
 
 ---
 
-## Adding a New Tool
+## Coding Standards
 
-1. Create a new file at `forge/tools/builtin/your_tool.py`.
+Forge uses [Ruff](https://docs.astral.sh/ruff/) for linting and formatting. All submitted code must pass both linting and formatting checks before merge.
+
+- **Line length**: 100 characters.
+- **Target version**: Python 3.12+.
+- **Lint rules**: `E`, `F`, `I`, `N`, `W` (pycodestyle, Pyflakes, isort, naming, warnings).
+
+---
+
+## Extension Guides
+
+### Adding a New Tool
+
+1. Create a file at `forge/tools/builtin/<tool_name>.py`.
 2. Implement an async function and a `register_tools(registry)` entry point.
 3. Import the registration function in `forge/tools/registry.py` within `load_builtins()`.
 4. Add corresponding tests in `tests/unit/test_tools.py`.
 
----
-
-## Adding a New Model Provider
+### Adding a New Model Provider
 
 1. Add the provider to the `ModelProvider` enum in `forge/core/types.py`.
 2. Add routing logic in `forge/models/router.py`.

@@ -49,7 +49,7 @@ def _sync_file_op(operation: str, path: str, content: str) -> str:
 
 
 async def file_operations(operation: str, path: str = ".", content: str = "") -> str:
-    """Perform file operations (read, write, list, delete, exists) in the workspace."""
+    """Perform file operations in the workspace directory."""
     return await asyncio.to_thread(_sync_file_op, operation, path, content)
 
 
@@ -57,17 +57,17 @@ def register_tools(registry) -> None:
     registry.register(
         name="file_ops",
         func=file_operations,
-        description="Perform file operations (read, write, list, delete, exists) in the workspace.",
+        description="Perform file operations (read, write, list, delete, exists) in the workspace directory.",
         parameters={
             "type": "object",
             "properties": {
                 "operation": {
                     "type": "string",
-                    "description": "Operation to perform: read, write, list, delete, exists",
+                    "description": "Operation to perform: read, write, list, delete, exists.",
                     "enum": ["read", "write", "list", "delete", "exists"],
                 },
-                "path": {"type": "string", "description": "File or directory path relative to workspace", "default": "."},
-                "content": {"type": "string", "description": "Content to write (for write operation)", "default": ""},
+                "path": {"type": "string", "description": "File or directory path relative to the workspace.", "default": "."},
+                "content": {"type": "string", "description": "Content to write (for the write operation).", "default": ""},
             },
             "required": ["operation"],
         },

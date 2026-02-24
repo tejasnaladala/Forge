@@ -1,6 +1,9 @@
-"""Forge — The Universal AI Agent Runtime.
+"""Forge -- universal AI agent runtime.
 
-Usage:
+Define, execute, and orchestrate AI agents across any model provider.
+
+Usage::
+
     from forge import Agent
     agent = Agent("my-agent", model="claude-sonnet-4-20250514")
     result = await agent.run("Hello!")

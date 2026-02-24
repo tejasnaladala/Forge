@@ -7,17 +7,22 @@ from forge.tools.schema import ToolSchema
 
 
 def tool(_func=None, *, name: str | None = None, description: str | None = None):
-    """Decorator to mark a function as a Forge tool.
+    """Register an async function as a Forge tool.
 
-    Usage:
+    Can be used with or without arguments::
+
         @tool
         async def my_tool(query: str) -> str:
             '''Search for something.'''
             return "result"
 
-        @tool(name="custom_name", description="Does something")
+        @tool(name="custom_name", description="Custom description")
         async def another_tool(x: int) -> int:
             return x * 2
+
+    Args:
+        name: Override the tool name. Defaults to the function name.
+        description: Override the tool description. Defaults to the function docstring.
     """
     def decorator(func):
         func._forge_tool = True

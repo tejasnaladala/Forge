@@ -7,7 +7,7 @@ WORKSPACE = Path("./forge_workspace")
 
 
 async def execute_shell(command: str, timeout: int = 30) -> str:
-    """Execute a shell command in the workspace directory."""
+    """Execute a shell command in the workspace directory and return its output."""
     WORKSPACE.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -46,8 +46,8 @@ def register_tools(registry) -> None:
         parameters={
             "type": "object",
             "properties": {
-                "command": {"type": "string", "description": "The shell command to execute"},
-                "timeout": {"type": "integer", "description": "Timeout in seconds", "default": 30},
+                "command": {"type": "string", "description": "The shell command to execute."},
+                "timeout": {"type": "integer", "description": "Timeout in seconds.", "default": 30},
             },
             "required": ["command"],
         },

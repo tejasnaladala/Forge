@@ -1,18 +1,19 @@
 # Quickstart Guide
 
-This guide walks through installing Forge, configuring a model provider, creating an agent, and running it. The entire process takes under five minutes.
+This guide covers installing Forge, configuring a model provider, defining an agent, and executing it.
+
+---
+
+## Prerequisites
+
+- Python 3.11 or later
+- (Optional) [Ollama](https://ollama.com) for local model inference
 
 ---
 
 ## Installation
 
-### From PyPI
-
-```bash
-pip install forge-ai
-```
-
-### From Source (with all optional providers)
+### From Source
 
 ```bash
 git clone https://github.com/nautilus4707/Forge.git
@@ -20,21 +21,21 @@ cd Forge
 pip install -e ".[all]"
 ```
 
-Forge requires Python 3.11 or later.
-
 ---
 
 ## Provider Configuration
 
+Forge requires at least one configured model provider. Choose a cloud provider or use Ollama for local inference.
+
 ### Option A: Cloud Provider
 
-Copy the example environment file and configure at least one API key:
+Copy the example environment file and set the API key for your chosen provider:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and set the key for your chosen provider:
+Edit `.env` and provide the appropriate key:
 
 ```
 ANTHROPIC_API_KEY=sk-ant-your-key-here
@@ -50,19 +51,19 @@ Install [Ollama](https://ollama.com) and pull a model:
 ollama pull llama3.2:3b
 ```
 
-No API key is required. Set the model in your forgefile to `ollama/llama3.2:3b`.
+No API key is required. Set the model field in your forgefile to `ollama/llama3.2:3b`.
 
 ---
 
-## Creating an Agent
+## Defining an Agent
 
-Generate a starter `forgefile.yaml`:
+Generate a default `forgefile.yaml`:
 
 ```bash
 forge init
 ```
 
-This creates a configuration file in the current directory with the following default structure:
+This creates a configuration file in the current directory:
 
 ```yaml
 agent:
@@ -99,13 +100,13 @@ Override the model at runtime:
 forge run -m ollama/llama3.2:3b "What is 2+2?"
 ```
 
-The output includes the agent's reasoning steps, tool invocations, final response, and cost and token usage summary.
+The output includes the agent's reasoning steps, tool invocations, final response, and a cost and token usage summary.
 
 ---
 
-## Customization
+## Agent Customization
 
-Edit `forgefile.yaml` to tailor the agent to a specific use case:
+Edit `forgefile.yaml` to configure the agent for a specific use case:
 
 ```yaml
 agent:
@@ -127,10 +128,13 @@ agent:
 
 | Parameter | Description |
 |-----------|-------------|
-| `model` | Any LiteLLM-compatible model string (e.g., `claude-sonnet-4-20250514`, `gpt-4o`, `ollama/llama3.2:3b`) |
-| `tools` | List of built-in tools to enable |
-| `cost_limit` | Maximum spend per session in USD |
-| `memory.backend` | Persistent memory backend (`sqlite`) |
+| `model` | Any LiteLLM-compatible model identifier (e.g., `claude-sonnet-4-20250514`, `gpt-4o`, `ollama/llama3.2:3b`). |
+| `tools` | List of built-in tool names to enable. |
+| `system_prompt` | The system-level instruction provided to the model. |
+| `cost_limit` | Maximum spend per session in USD. |
+| `memory.backend` | Persistent memory backend (`sqlite`). |
+| `temperature` | Sampling temperature for model responses. |
+| `max_iterations` | Maximum number of agent loop iterations per session. |
 
 ---
 
@@ -138,12 +142,12 @@ agent:
 
 | Tool | Description |
 |------|-------------|
-| `web_search` | Search the web via DuckDuckGo |
-| `web_fetch` | Fetch and extract content from URLs |
-| `file_ops` | Read, write, and list files |
-| `python_exec` | Execute Python code in a sandboxed environment |
-| `shell` | Run shell commands |
-| `http_request` | Make HTTP requests |
+| `web_search` | Search the web using DuckDuckGo. |
+| `web_fetch` | Fetch and extract text content from a URL. |
+| `file_ops` | Read, write, list, and delete files. |
+| `shell` | Execute shell commands. |
+| `python_exec` | Execute Python code in a sandboxed environment. |
+| `http_request` | Send HTTP requests (GET, POST, PUT, DELETE). |
 
 Enable tools by name in the `tools` list within `forgefile.yaml`.
 
@@ -151,7 +155,7 @@ Enable tools by name in the `tools` list within `forgefile.yaml`.
 
 ## Custom Tools
 
-Create custom tools using the `@tool` decorator:
+Define custom tools using the `@tool` decorator:
 
 ```python
 from forge.sdk import Agent, tool
@@ -159,7 +163,6 @@ from forge.sdk import Agent, tool
 @tool
 async def weather(city: str) -> str:
     """Get current weather for a city."""
-    # Implementation here
     return f"Weather in {city}: 72F and sunny"
 
 agent = Agent(
@@ -169,11 +172,13 @@ agent = Agent(
 )
 ```
 
+Custom tools are registered automatically when passed to the `Agent` constructor.
+
 ---
 
 ## Python SDK
 
-Use the Python SDK for programmatic control:
+The Python SDK provides programmatic access to all agent capabilities:
 
 ```python
 import asyncio
@@ -232,7 +237,7 @@ workflow:
     - agent: writer
 ```
 
-Start all agents as a server:
+Start all agents and launch the API server:
 
 ```bash
 forge up
@@ -242,21 +247,21 @@ forge up
 
 | Type | Behavior |
 |------|----------|
-| `sequential` | Agents run in order; output of each agent feeds into the next. |
-| `parallel` | Agents run concurrently. |
+| `sequential` | Agents execute in order. Each agent receives the output of the previous agent. |
+| `parallel` | Agents execute concurrently. |
 | `supervisor` | A supervisor agent delegates tasks to worker agents. |
 
 ---
 
-## Dashboard and API Server
+## API Server and Dashboard
 
-Start the API server to access the web dashboard and REST API:
+Start the API server:
 
 ```bash
 forge server --port 8626
 ```
 
-Alternatively, deploy with Docker Compose:
+Deploy with Docker Compose (includes the dashboard):
 
 ```bash
 docker compose up
@@ -264,7 +269,7 @@ docker compose up
 
 | Service | URL |
 |---------|-----|
-| REST API | `http://localhost:8626` |
+| API Server | `http://localhost:8626` |
 | API Documentation | `http://localhost:8626/docs` |
 | Dashboard | `http://localhost:3000` |
 
@@ -272,8 +277,8 @@ docker compose up
 
 ## Next Steps
 
-- Review the full [README](../README.md) for architecture details and the complete feature set.
-- See [CONTRIBUTING.md](../CONTRIBUTING.md) for instructions on adding tools or providers.
+- Review the [README](../README.md) for architecture details and the complete feature set.
+- Refer to [CONTRIBUTING.md](../CONTRIBUTING.md) for instructions on adding tools or providers.
 - Browse built-in tool implementations in `forge/tools/builtin/`.
-- Explore the SDK in `forge/sdk/`.
+- Explore the SDK source in `forge/sdk/`.
 - List available models: `forge models`.

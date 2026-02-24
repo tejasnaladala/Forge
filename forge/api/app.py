@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     app = FastAPI(
         title="Forge",
-        description="The universal AI agent runtime",
+        description="Universal AI agent runtime. Define, execute, and orchestrate agents across any model provider.",
         version=__version__,
         lifespan=lifespan,
     )

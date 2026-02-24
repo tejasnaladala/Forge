@@ -6,7 +6,7 @@ from duckduckgo_search import DDGS
 
 
 async def search(query: str, num_results: int = 5) -> list[dict]:
-    """Search the web for information. Returns titles, URLs, and snippets."""
+    """Search the web and return titles, URLs, and snippets."""
     try:
         def _sync_search():
             with DDGS() as ddgs:
@@ -25,12 +25,12 @@ def register_tools(registry) -> None:
     registry.register(
         name="web_search",
         func=search,
-        description="Search the web for information. Returns titles, URLs, and snippets.",
+        description="Search the web and return titles, URLs, and snippets.",
         parameters={
             "type": "object",
             "properties": {
-                "query": {"type": "string", "description": "The search query"},
-                "num_results": {"type": "integer", "description": "Number of results to return", "default": 5},
+                "query": {"type": "string", "description": "The search query."},
+                "num_results": {"type": "integer", "description": "Number of results to return.", "default": 5},
             },
             "required": ["query"],
         },
