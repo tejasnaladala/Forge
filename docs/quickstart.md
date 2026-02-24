@@ -1,16 +1,18 @@
 # Quickstart Guide
 
-Get a Forge agent running in under five minutes.
+This guide walks through installing Forge, configuring a model provider, creating an agent, and running it. The entire process takes under five minutes.
 
 ---
 
-## Install
+## Installation
+
+### From PyPI
 
 ```bash
 pip install forge-ai
 ```
 
-Or install from source with all optional providers:
+### From Source (with all optional providers)
 
 ```bash
 git clone https://github.com/nautilus4707/Forge.git
@@ -18,41 +20,41 @@ cd Forge
 pip install -e ".[all]"
 ```
 
-Requires Python 3.11 or later.
+Forge requires Python 3.11 or later.
 
 ---
 
-## Setup API Key or Ollama
+## Provider Configuration
 
-### Option A: Cloud Provider (Anthropic, OpenAI, Google, etc.)
+### Option A: Cloud Provider
 
-Copy the example environment file and fill in at least one key:
+Copy the example environment file and configure at least one API key:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and set your key:
+Edit `.env` and set the key for your chosen provider:
 
 ```
 ANTHROPIC_API_KEY=sk-ant-your-key-here
 ```
 
-Other supported providers: OpenAI, Google AI, Groq, Together, DeepSeek.
+Supported cloud providers: Anthropic, OpenAI, Google AI, Groq, Together AI, DeepSeek.
 
-### Option B: Free Local Models with Ollama
+### Option B: Local Inference with Ollama
 
-Install [Ollama](https://ollama.com), then pull a model:
+Install [Ollama](https://ollama.com) and pull a model:
 
 ```bash
 ollama pull llama3.2:3b
 ```
 
-No API key required. Set the model in your forgefile to `ollama/llama3.2:3b`.
+No API key is required. Set the model in your forgefile to `ollama/llama3.2:3b`.
 
 ---
 
-## Create Your First Agent
+## Creating an Agent
 
 Generate a starter `forgefile.yaml`:
 
@@ -60,13 +62,13 @@ Generate a starter `forgefile.yaml`:
 forge init
 ```
 
-This creates a `forgefile.yaml` in the current directory with a default agent configuration:
+This creates a configuration file in the current directory with the following default structure:
 
 ```yaml
 agent:
   name: my-agent
   model: claude-sonnet-4-20250514
-  # model: ollama/llama3.2:3b  # Uncomment for free local model
+  # model: ollama/llama3.2:3b  # Uncomment for local inference
   system_prompt: |
     You are a helpful AI assistant. You can search the web,
     fetch URLs, read/write files, and execute code.
@@ -83,27 +85,27 @@ agent:
 
 ---
 
-## Run It
+## Running an Agent
 
-Run your agent with a prompt:
+Execute the agent with a prompt:
 
 ```bash
 forge run "Summarize the latest Python 3.13 release notes"
 ```
 
-Override the model on the fly:
+Override the model at runtime:
 
 ```bash
 forge run -m ollama/llama3.2:3b "What is 2+2?"
 ```
 
-You will see the agent think, call tools, and produce a final response, along with cost and token usage.
+The output includes the agent's reasoning steps, tool invocations, final response, and cost and token usage summary.
 
 ---
 
-## Customize
+## Customization
 
-Edit `forgefile.yaml` to tailor the agent to your needs:
+Edit `forgefile.yaml` to tailor the agent to a specific use case:
 
 ```yaml
 agent:
@@ -121,32 +123,33 @@ agent:
     backend: sqlite
 ```
 
-Key options:
-- **model** -- any LiteLLM-compatible model string (e.g. `claude-sonnet-4-20250514`, `gpt-4o`, `ollama/llama3.2:3b`)
-- **tools** -- list of built-in tools to enable
-- **cost_limit** -- maximum spend per session in USD
-- **memory.backend** -- `sqlite` for persistent memory
+### Configuration Reference
+
+| Parameter | Description |
+|-----------|-------------|
+| `model` | Any LiteLLM-compatible model string (e.g., `claude-sonnet-4-20250514`, `gpt-4o`, `ollama/llama3.2:3b`) |
+| `tools` | List of built-in tools to enable |
+| `cost_limit` | Maximum spend per session in USD |
+| `memory.backend` | Persistent memory backend (`sqlite`) |
 
 ---
 
-## Add Tools
-
-### Built-in Tools
-
-Forge ships with these built-in tools:
+## Built-in Tools
 
 | Tool | Description |
 |------|-------------|
 | `web_search` | Search the web via DuckDuckGo |
 | `web_fetch` | Fetch and extract content from URLs |
 | `file_ops` | Read, write, and list files |
-| `python_exec` | Execute Python code in a sandbox |
+| `python_exec` | Execute Python code in a sandboxed environment |
 | `shell` | Run shell commands |
 | `http_request` | Make HTTP requests |
 
-Enable them by name in `forgefile.yaml` under `tools`.
+Enable tools by name in the `tools` list within `forgefile.yaml`.
 
-### Custom Tools
+---
+
+## Custom Tools
 
 Create custom tools using the `@tool` decorator:
 
@@ -156,7 +159,7 @@ from forge.sdk import Agent, tool
 @tool
 async def weather(city: str) -> str:
     """Get current weather for a city."""
-    # Your implementation here
+    # Implementation here
     return f"Weather in {city}: 72F and sunny"
 
 agent = Agent(
@@ -195,7 +198,7 @@ async def main():
     async for step in agent.stream("Analyze this codebase"):
         print(step.type, step.output)
 
-    # Check cost
+    # Cost tracking
     print(f"Total cost: ${agent.cost:.4f}")
 
 asyncio.run(main())
@@ -205,7 +208,7 @@ asyncio.run(main())
 
 ## Multi-Agent Workflows
 
-Define multiple agents and orchestration in your forgefile:
+Define multiple agents and an orchestration strategy in the forgefile:
 
 ```yaml
 agents:
@@ -235,14 +238,17 @@ Start all agents as a server:
 forge up
 ```
 
-Workflow types:
-- **sequential** -- agents run one after another, output feeds into the next
-- **parallel** -- agents run concurrently
-- **supervisor** -- a supervisor agent delegates to workers
+### Workflow Types
+
+| Type | Behavior |
+|------|----------|
+| `sequential` | Agents run in order; output of each agent feeds into the next. |
+| `parallel` | Agents run concurrently. |
+| `supervisor` | A supervisor agent delegates tasks to worker agents. |
 
 ---
 
-## Dashboard
+## Dashboard and API Server
 
 Start the API server to access the web dashboard and REST API:
 
@@ -250,22 +256,24 @@ Start the API server to access the web dashboard and REST API:
 forge server --port 8626
 ```
 
-Or with Docker Compose:
+Alternatively, deploy with Docker Compose:
 
 ```bash
 docker compose up
 ```
 
-The server exposes:
-- **REST API** at `http://localhost:8626`
-- **API docs** at `http://localhost:8626/docs`
+| Service | URL |
+|---------|-----|
+| REST API | `http://localhost:8626` |
+| API Documentation | `http://localhost:8626/docs` |
+| Dashboard | `http://localhost:3000` |
 
 ---
 
 ## Next Steps
 
-- Read the full [README](../README.md) for architecture details
-- See [CONTRIBUTING.md](../CONTRIBUTING.md) to add tools or providers
-- Browse built-in tools in `forge/tools/builtin/`
-- Explore the SDK in `forge/sdk/`
-- Check available models: `forge models`
+- Review the full [README](../README.md) for architecture details and the complete feature set.
+- See [CONTRIBUTING.md](../CONTRIBUTING.md) for instructions on adding tools or providers.
+- Browse built-in tool implementations in `forge/tools/builtin/`.
+- Explore the SDK in `forge/sdk/`.
+- List available models: `forge models`.
