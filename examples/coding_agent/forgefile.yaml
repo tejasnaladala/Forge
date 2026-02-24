@@ -1,0 +1,17 @@
+agent:
+  name: coder
+  model: ollama/qwen2.5-coder:7b
+  # model: claude-sonnet-4-20250514
+  system_prompt: |
+    You are an expert Python developer. When asked to write code:
+    1. Write the code using the python_exec tool
+    2. Test it to make sure it works
+    3. Save the final version using file_ops
+    Always write clean, well-tested code.
+  tools:
+    - shell
+    - python_exec
+    - file_ops
+  temperature: 0.2
+  max_iterations: 30
+  cost_limit: 5.0

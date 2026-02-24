@@ -1,0 +1,7 @@
+agent:
+  name: hello
+  model: ollama/llama3.2:3b  # Free local model
+  # model: claude-sonnet-4-20250514  # Uncomment for Claude
+  system_prompt: "You are a friendly assistant. Keep responses brief."
+  tools: []
+  cost_limit: 1.0

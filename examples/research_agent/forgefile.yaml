@@ -1,0 +1,19 @@
+agent:
+  name: researcher
+  model: claude-sonnet-4-20250514
+  # model: ollama/llama3.2:3b
+  system_prompt: |
+    You are a research analyst. When given a topic:
+    1. Search the web for recent information
+    2. Fetch and read relevant pages
+    3. Synthesize findings into a clear, structured report
+    Always cite your sources.
+  tools:
+    - web_search
+    - web_fetch
+    - python_exec
+    - file_ops
+  temperature: 0.3
+  cost_limit: 5.0
+  memory:
+    backend: sqlite
