@@ -36,12 +36,22 @@ class ForgefileParser:
             agent = self._parse_agent(raw_dict["agent"])
             result["agents"][agent.name] = agent
         elif "agents" in raw_dict:
-            for agent_raw in raw_dict["agents"]:
-                agent = self._parse_agent(agent_raw)
-                result["agents"][agent.name] = agent
+            agents_data = raw_dict["agents"]
+            if isinstance(agents_data, list):
+                for agent_raw in agents_data:
+                    agent = self._parse_agent(agent_raw)
+                    result["agents"][agent.name] = agent
+            elif isinstance(agents_data, dict):
+                for name, agent_raw in agents_data.items():
+                    if isinstance(agent_raw, dict):
+                        agent_raw.setdefault("name", name)
+                        agent = self._parse_agent(agent_raw)
+                        result["agents"][agent.name] = agent
 
         if "workflows" in raw_dict:
             result["workflows"] = raw_dict["workflows"]
+        elif "workflow" in raw_dict:
+            result["workflows"] = [raw_dict["workflow"]]
 
         if "settings" in raw_dict:
             result["settings"] = raw_dict["settings"]
