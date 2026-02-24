@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  forge:
+    build: .
+    ports:
+      - "8626:8626"
+    volumes:
+      - ./forgefile.yaml:/app/forgefile.yaml:ro
+      - ./.env:/app/.env:ro
+      - forge-workspace:/app/forge_workspace
+      - forge-data:/app/.forge
+    depends_on:
+      - redis
+    networks:
+      - forge-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - forge-network
+
+volumes:
+  forge-workspace:
+  forge-data:
+  redis-data:
+
+networks:
+  forge-network:
+    driver: bridge

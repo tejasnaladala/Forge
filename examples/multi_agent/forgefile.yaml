@@ -1,0 +1,28 @@
+agents:
+  - name: researcher
+    model: claude-sonnet-4-20250514
+    system_prompt: "Research the given topic thoroughly. Return key findings."
+    tools:
+      - web_search
+      - web_fetch
+    cost_limit: 3.0
+
+  - name: writer
+    model: claude-sonnet-4-20250514
+    system_prompt: "Take research findings and write a clear, engaging article."
+    tools:
+      - file_ops
+    cost_limit: 2.0
+
+  - name: reviewer
+    model: ollama/llama3.2:3b
+    system_prompt: "Review the article for clarity, accuracy, and completeness. Suggest improvements."
+    cost_limit: 0.0
+
+workflows:
+  - name: research-pipeline
+    type: sequential
+    steps:
+      - agent: researcher
+      - agent: writer
+      - agent: reviewer
