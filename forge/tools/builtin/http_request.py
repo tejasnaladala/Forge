@@ -1,0 +1,58 @@
+from __future__ import annotations
+
+import json
+
+import httpx
+
+
+async def http_request(
+    method: str = "GET",
+    url: str = "",
+    headers: dict = None,
+    body: str = "",
+    timeout: int = 30,
+) -> str:
+    """Make an HTTP request and return the response."""
+    headers = headers or {}
+
+    try:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=float(timeout)) as client:
+            kwargs = {"headers": headers}
+
+            if method.upper() in ("POST", "PUT", "PATCH") and body:
+                try:
+                    kwargs["json"] = json.loads(body)
+                except (json.JSONDecodeError, TypeError):
+                    kwargs["content"] = body
+
+            response = await client.request(method.upper(), url, **kwargs)
+
+            response_body = response.text[:5000]
+            result = {
+                "status_code": response.status_code,
+                "headers": dict(response.headers),
+                "body": response_body,
+            }
+            return json.dumps(result, indent=2)
+
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+def register_tools(registry) -> None:
+    registry.register(
+        name="http_request",
+        func=http_request,
+        description="Make an HTTP request (GET, POST, PUT, DELETE, PATCH) and return the response.",
+        parameters={
+            "type": "object",
+            "properties": {
+                "method": {"type": "string", "description": "HTTP method", "default": "GET", "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"]},
+                "url": {"type": "string", "description": "The URL to request"},
+                "headers": {"type": "object", "description": "Request headers"},
+                "body": {"type": "string", "description": "Request body (JSON string for POST/PUT/PATCH)", "default": ""},
+                "timeout": {"type": "integer", "description": "Timeout in seconds", "default": 30},
+            },
+            "required": ["url"],
+        },
+    )
