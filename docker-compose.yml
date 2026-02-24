@@ -15,6 +15,17 @@ services:
     networks:
       - forge-network
 
+  dashboard:
+    build: ./dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8626
+    depends_on:
+      - forge
+    networks:
+      - forge-network
+
   redis:
     image: redis:7-alpine
     ports:
