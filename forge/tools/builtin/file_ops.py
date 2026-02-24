@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import shutil
 from pathlib import Path
@@ -7,8 +8,7 @@ from pathlib import Path
 WORKSPACE = Path("./forge_workspace")
 
 
-async def file_operations(operation: str, path: str = ".", content: str = "") -> str:
-    """Perform file operations (read, write, list, delete, exists) in the workspace."""
+def _sync_file_op(operation: str, path: str, content: str) -> str:
     WORKSPACE.mkdir(parents=True, exist_ok=True)
     target = WORKSPACE / path
 
@@ -46,6 +46,11 @@ async def file_operations(operation: str, path: str = ".", content: str = "") ->
 
     else:
         return f"Error: Unknown operation '{operation}'. Use: read, write, list, delete, exists"
+
+
+async def file_operations(operation: str, path: str = ".", content: str = "") -> str:
+    """Perform file operations (read, write, list, delete, exists) in the workspace."""
+    return await asyncio.to_thread(_sync_file_op, operation, path, content)
 
 
 def register_tools(registry) -> None:

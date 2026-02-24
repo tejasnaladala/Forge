@@ -1,17 +1,22 @@
 from __future__ import annotations
 
+import asyncio
+
 from duckduckgo_search import DDGS
 
 
 async def search(query: str, num_results: int = 5) -> list[dict]:
     """Search the web for information. Returns titles, URLs, and snippets."""
     try:
-        with DDGS() as ddgs:
-            results = list(ddgs.text(query, max_results=num_results))
-            return [
-                {"title": r.get("title", ""), "url": r.get("href", ""), "snippet": r.get("body", "")}
-                for r in results
-            ]
+        def _sync_search():
+            with DDGS() as ddgs:
+                return list(ddgs.text(query, max_results=num_results))
+
+        results = await asyncio.to_thread(_sync_search)
+        return [
+            {"title": r.get("title", ""), "url": r.get("href", ""), "snippet": r.get("body", "")}
+            for r in results
+        ]
     except Exception as e:
         return [{"error": str(e)}]
 

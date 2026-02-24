@@ -10,6 +10,7 @@ from forge.core.types import ForgeEvent
 router = APIRouter()
 
 _connections: list[WebSocket] = []
+_broadcast_registered = False
 
 
 async def _broadcast(event: ForgeEvent) -> None:
@@ -33,10 +34,13 @@ async def _broadcast(event: ForgeEvent) -> None:
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    global _broadcast_registered
     await websocket.accept()
     _connections.append(websocket)
 
-    event_bus.on_all(_broadcast)
+    if not _broadcast_registered:
+        event_bus.on_all(_broadcast)
+        _broadcast_registered = True
 
     try:
         while True:

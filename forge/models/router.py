@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import time
+import uuid
 from typing import Any
 
 import httpx
@@ -43,9 +44,11 @@ class ModelRouter:
             "OPENAI_API_KEY": settings.openai_api_key,
             "ANTHROPIC_API_KEY": settings.anthropic_api_key,
             "GOOGLE_AI_API_KEY": settings.google_ai_api_key,
+            "GEMINI_API_KEY": settings.google_ai_api_key,
             "DEEPSEEK_API_KEY": settings.deepseek_api_key,
             "GROQ_API_KEY": settings.groq_api_key,
             "TOGETHER_API_KEY": settings.together_api_key,
+            "TOGETHERAI_API_KEY": settings.together_api_key,
         }
         for env_var, value in key_map.items():
             if value:
@@ -70,9 +73,11 @@ class ModelRouter:
         except Exception as e:
             if model_config.fallback:
                 logger.warning("model_fallback", primary=model_config.model, fallback=model_config.fallback, error=str(e))
+                from forge.core.parser import ForgefileParser
+                parsed_fallback = ForgefileParser._parse_model_shorthand(model_config.fallback)
                 fallback_config = ModelConfig(
-                    provider=model_config.provider,
-                    model=model_config.fallback,
+                    provider=parsed_fallback.provider,
+                    model=parsed_fallback.model,
                     temperature=model_config.temperature,
                     max_tokens=model_config.max_tokens,
                 )
@@ -189,10 +194,16 @@ class ModelRouter:
             tool_calls = []
             for tc in raw_tool_calls:
                 func = tc.get("function", {})
+                args = func.get("arguments", {})
+                if isinstance(args, str):
+                    try:
+                        args = json.loads(args)
+                    except json.JSONDecodeError:
+                        args = {"raw": args}
                 tool_calls.append({
-                    "id": f"call_{len(tool_calls)}",
+                    "id": f"call_{uuid.uuid4().hex[:8]}",
                     "name": func.get("name", ""),
-                    "arguments": func.get("arguments", {}),
+                    "arguments": args,
                 })
 
         tokens_in = data.get("prompt_eval_count", 0)
@@ -246,7 +257,7 @@ class ModelRouter:
                     except json.JSONDecodeError:
                         args = {"raw": args}
                 tool_calls.append({
-                    "id": tc.get("id", f"call_{len(tool_calls)}"),
+                    "id": tc.get("id", f"call_{uuid.uuid4().hex[:8]}"),
                     "name": func.get("name", ""),
                     "arguments": args,
                 })

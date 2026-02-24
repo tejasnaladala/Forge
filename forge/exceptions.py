@@ -44,7 +44,7 @@ class ToolTimeoutError(ToolError):
     pass
 
 
-class MemoryError(ForgeError):
+class ForgeMemoryError(ForgeError):
     pass
 
 

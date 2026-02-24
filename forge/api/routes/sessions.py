@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/v1/sessions", tags=["sessions"])
@@ -14,7 +15,7 @@ class MessageRequest(BaseModel):
 async def list_sessions(request: Request, agent_name: str):
     runtime = request.app.state.orchestration.get_runtime(agent_name)
     if runtime is None:
-        return {"error": f"Agent '{agent_name}' not found"}
+        return JSONResponse(status_code=404, content={"error": f"Agent '{agent_name}' not found"})
 
     sessions = []
     for s in runtime.list_sessions():
@@ -32,7 +33,7 @@ async def list_sessions(request: Request, agent_name: str):
 async def create_session(request: Request, agent_name: str):
     runtime = request.app.state.orchestration.get_runtime(agent_name)
     if runtime is None:
-        return {"error": f"Agent '{agent_name}' not found"}
+        return JSONResponse(status_code=404, content={"error": f"Agent '{agent_name}' not found"})
 
     session = await runtime.create_session()
     return {"session_id": session.id, "agent": agent_name}
@@ -42,7 +43,7 @@ async def create_session(request: Request, agent_name: str):
 async def send_message(request: Request, agent_name: str, session_id: str, body: MessageRequest):
     runtime = request.app.state.orchestration.get_runtime(agent_name)
     if runtime is None:
-        return {"error": f"Agent '{agent_name}' not found"}
+        return JSONResponse(status_code=404, content={"error": f"Agent '{agent_name}' not found"})
 
     try:
         response = await runtime.run(session_id, body.message, stream=False)
@@ -54,4 +55,4 @@ async def send_message(request: Request, agent_name: str, session_id: str, body:
             "steps": len(session.steps) if session else 0,
         }
     except ValueError as e:
-        return {"error": str(e)}
+        return JSONResponse(status_code=400, content={"error": str(e)})

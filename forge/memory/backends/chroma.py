@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 import structlog
 
 logger = structlog.get_logger()
@@ -18,11 +20,12 @@ class ChromaMemory:
 
         try:
             import chromadb
+            from chromadb.config import Settings
 
-            client = chromadb.Client(chromadb.config.Settings(
-                persist_directory=persist_path,
-                anonymized_telemetry=False,
-            ))
+            client = chromadb.PersistentClient(
+                path=persist_path,
+                settings=Settings(anonymized_telemetry=False),
+            )
 
             ef = None
             if embedding_provider == "ollama":
@@ -56,13 +59,15 @@ class ChromaMemory:
         doc_id = f"{session_id}_{self._counter}"
         meta = metadata or {}
         meta["session_id"] = session_id
-        self._collection.add(documents=[content], ids=[doc_id], metadatas=[meta])
+        collection = self._collection
+        await asyncio.to_thread(collection.add, documents=[content], ids=[doc_id], metadatas=[meta])
 
     async def search(self, query: str, k: int = 5) -> list[str]:
         if self._collection is None:
             return []
         try:
-            results = self._collection.query(query_texts=[query], n_results=k)
+            collection = self._collection
+            results = await asyncio.to_thread(collection.query, query_texts=[query], n_results=k)
             return results.get("documents", [[]])[0]
         except Exception:
             logger.warning("chroma_search_error", exc_info=True)
@@ -72,12 +77,13 @@ class ChromaMemory:
         if self._collection is None:
             return
         try:
+            collection = self._collection
             if session_id:
-                self._collection.delete(where={"session_id": session_id})
+                await asyncio.to_thread(collection.delete, where={"session_id": session_id})
             else:
-                # Reset by getting all IDs
-                all_ids = self._collection.get()["ids"]
+                all_data = await asyncio.to_thread(collection.get)
+                all_ids = all_data["ids"]
                 if all_ids:
-                    self._collection.delete(ids=all_ids)
+                    await asyncio.to_thread(collection.delete, ids=all_ids)
         except Exception:
             logger.warning("chroma_clear_error", exc_info=True)

@@ -131,23 +131,34 @@ async def _start_server(forgefile, port):
     import uvicorn
     from forge.api.app import create_app
     from forge.core.parser import ForgefileParser
+    from forge.core.registry import AgentRegistry
     from forge.core.runtime import AgentRuntime
     from forge.memory.manager import MemoryManager
     from forge.models.router import ModelRouter
+    from forge.orchestration.engine import OrchestrationEngine
     from forge.tools.executor import ToolExecutor
     from forge.tools.registry import ToolRegistry
 
     app = create_app()
 
+    # Pre-initialize app state so agent registration works before lifespan
+    tool_registry = ToolRegistry()
+    tool_registry.load_builtins()
+    model_router = ModelRouter()
+    tool_executor = ToolExecutor(tool_registry)
+    orchestration = OrchestrationEngine()
+    agent_registry = AgentRegistry()
+
+    app.state.model_router = model_router
+    app.state.tool_registry = tool_registry
+    app.state.tool_executor = tool_executor
+    app.state.orchestration = orchestration
+    app.state.agent_registry = agent_registry
+
     forgefile_path = Path(forgefile)
     if forgefile_path.is_file():
         parser = ForgefileParser()
         parsed = parser.parse_file(forgefile_path)
-
-        tool_registry = ToolRegistry()
-        tool_registry.load_builtins()
-        tool_executor = ToolExecutor(tool_registry)
-        model_router = ModelRouter()
 
         for name, config in parsed.get("agents", {}).items():
             memory_manager = MemoryManager(config.memory)
@@ -157,8 +168,8 @@ async def _start_server(forgefile, port):
                 tool_executor=tool_executor,
                 memory_manager=memory_manager,
             )
-            app.state.orchestration.register_runtime(name, runtime)
-            app.state.agent_registry.register(config)
+            orchestration.register_runtime(name, runtime)
+            agent_registry.register(config)
             console.print(f"[green]Registered agent:[/green] {name}")
 
     console.print(Panel(

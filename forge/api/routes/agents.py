@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from forge.core.parser import ForgefileParser
@@ -62,7 +63,7 @@ async def get_agent(request: Request, name: str):
     registry = request.app.state.agent_registry
     config = registry.get(name)
     if config is None:
-        return {"error": f"Agent '{name}' not found"}, 404
+        return JSONResponse(status_code=404, content={"error": f"Agent '{name}' not found"})
 
     runtime = request.app.state.orchestration.get_runtime(name)
     session_count = len(runtime.list_sessions()) if runtime else 0
@@ -83,4 +84,4 @@ async def run_agent(request: Request, name: str, body: RunAgentRequest):
         result = await orchestration.run_agent(name, body.input)
         return result
     except ValueError as e:
-        return {"error": str(e)}
+        return JSONResponse(status_code=404, content={"error": str(e)})

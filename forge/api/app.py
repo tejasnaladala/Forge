@@ -18,20 +18,25 @@ from forge.version import __version__
 async def lifespan(app: FastAPI):
     settings.ensure_dirs()
 
-    app.state.model_router = ModelRouter()
+    if not hasattr(app.state, "model_router"):
+        app.state.model_router = ModelRouter()
 
-    tool_registry = ToolRegistry()
-    tool_registry.load_builtins()
-    app.state.tool_registry = tool_registry
-    app.state.tool_executor = ToolExecutor(tool_registry)
+    if not hasattr(app.state, "tool_registry"):
+        tool_registry = ToolRegistry()
+        tool_registry.load_builtins()
+        app.state.tool_registry = tool_registry
+        app.state.tool_executor = ToolExecutor(tool_registry)
 
-    app.state.orchestration = OrchestrationEngine()
-    app.state.agent_registry = AgentRegistry()
+    if not hasattr(app.state, "orchestration"):
+        app.state.orchestration = OrchestrationEngine()
+
+    if not hasattr(app.state, "agent_registry"):
+        app.state.agent_registry = AgentRegistry()
 
     yield
 
     # Cleanup
-    if hasattr(app.state.model_router, "_client"):
+    if hasattr(app.state, "model_router") and hasattr(app.state.model_router, "_client"):
         await app.state.model_router._client.aclose()
 
 
