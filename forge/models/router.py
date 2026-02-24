@@ -190,9 +190,12 @@ class ModelRouter:
         host = config.base_url or settings.ollama_host
         url = f"{host}/api/chat"
 
+        # Transform messages to Ollama-compatible format
+        ollama_messages = self._transform_messages_for_ollama(messages)
+
         payload: dict[str, Any] = {
             "model": config.model,
-            "messages": messages,
+            "messages": ollama_messages,
             "stream": False,
             "options": {
                 "temperature": config.temperature,
@@ -237,6 +240,59 @@ class ModelRouter:
             "tokens_out": tokens_out,
             "cost": 0.0,
         }
+
+    def _transform_messages_for_ollama(self, messages: list[dict]) -> list[dict]:
+        """
+        Transform OpenAI-style messages to Ollama-compatible format.
+
+        Ollama's /api/chat endpoint differs from OpenAI in several ways:
+        1. tool_calls in assistant messages must NOT have 'id' or 'type' fields
+        2. tool_calls arguments must be a dict object, not a JSON string
+        3. Tool response messages (role='tool') must not have 'tool_call_id' or 'name'
+        4. Assistant messages with empty content and tool_calls may cause 400 errors
+        """
+        transformed = []
+
+        for msg in messages:
+            transformed_msg = dict(msg)  # Shallow copy
+
+            if msg.get("role") == "assistant":
+                # Fix empty content in assistant messages with tool_calls
+                if msg.get("tool_calls") and not msg.get("content"):
+                    transformed_msg["content"] = "I'll use the available tools to help with this."
+
+                # Transform tool_calls from OpenAI format to Ollama format
+                if msg.get("tool_calls"):
+                    ollama_tool_calls = []
+                    for tc in msg["tool_calls"]:
+                        # OpenAI format has: id, type, function: {name, arguments(string)}
+                        # Ollama format has: function: {name, arguments(dict)}
+                        func = tc.get("function", {})
+                        args = func.get("arguments", {})
+
+                        # Convert arguments from JSON string to dict if needed
+                        if isinstance(args, str):
+                            try:
+                                args = json.loads(args)
+                            except (json.JSONDecodeError, TypeError):
+                                args = {"raw": args}
+
+                        ollama_tool_calls.append({
+                            "function": {
+                                "name": func.get("name", ""),
+                                "arguments": args,
+                            }
+                        })
+                    transformed_msg["tool_calls"] = ollama_tool_calls
+
+            elif msg.get("role") == "tool":
+                # Ollama supports role='tool' but doesn't want extra OpenAI fields
+                transformed_msg.pop("tool_call_id", None)
+                transformed_msg.pop("name", None)
+
+            transformed.append(transformed_msg)
+
+        return transformed
 
     async def _complete_vllm(
         self,
