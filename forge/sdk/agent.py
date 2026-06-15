@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import asyncio
 from collections.abc import AsyncIterator
-from typing import Any
 
 from forge.core.parser import ForgefileParser
 from forge.core.runtime import AgentRuntime
-from forge.core.types import AgentConfig, MemoryConfig, ModelConfig, Session, Step, ToolConfig
+from forge.core.types import AgentConfig, MemoryConfig, Session, Step, ToolConfig
 from forge.memory.manager import MemoryManager
 from forge.models.router import ModelRouter
 from forge.tools.executor import ToolExecutor
@@ -63,7 +61,11 @@ class Agent:
             max_iterations=max_iterations,
             cost_limit=cost_limit,
             memory=MemoryConfig(backend=memory_backend),
-            allowed_tools=builtin_tool_names + [f._forge_tool_name for f in custom_tools if hasattr(f, "_forge_tool_name")] or None,
+            allowed_tools=(
+                builtin_tool_names
+                + [f._forge_tool_name for f in custom_tools if hasattr(f, "_forge_tool_name")]
+            )
+            or None,
             **kwargs,
         )
 

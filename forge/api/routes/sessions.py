@@ -53,7 +53,13 @@ async def create_session(request: Request, agent_name: str, _key: str = Depends(
 
 
 @router.post("/{agent_name}/{session_id}/message")
-async def send_message(request: Request, agent_name: str, session_id: str, body: MessageRequest, _key: str = Depends(require_api_key)):
+async def send_message(
+    request: Request,
+    agent_name: str,
+    session_id: str,
+    body: MessageRequest,
+    _key: str = Depends(require_api_key),
+):
     if not _VALID_NAME.match(agent_name):
         return JSONResponse(status_code=400, content={"error": "Invalid agent name."})
     if not _VALID_SESSION_ID.match(session_id):

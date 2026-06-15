@@ -64,10 +64,19 @@ def register_tools(registry) -> None:
         parameters={
             "type": "object",
             "properties": {
-                "method": {"type": "string", "description": "HTTP method.", "default": "GET", "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"]},
+                "method": {
+                    "type": "string",
+                    "description": "HTTP method.",
+                    "default": "GET",
+                    "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+                },
                 "url": {"type": "string", "description": "The target URL."},
                 "headers": {"type": "object", "description": "Request headers."},
-                "body": {"type": "string", "description": "Request body (JSON string for POST/PUT/PATCH).", "default": ""},
+                "body": {
+                    "type": "string",
+                    "description": "Request body (JSON string for POST/PUT/PATCH).",
+                    "default": "",
+                },
                 "timeout": {"type": "integer", "description": "Timeout in seconds.", "default": 30},
             },
             "required": ["url"],

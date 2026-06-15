@@ -90,7 +90,12 @@ class ModelRouter:
                 result = await self._complete_litellm(model_config, messages, tools)
         except Exception as e:
             if model_config.fallback:
-                logger.warning("model_fallback", primary=model_config.model, fallback=model_config.fallback, error=str(e))
+                logger.warning(
+                    "model_fallback",
+                    primary=model_config.model,
+                    fallback=model_config.fallback,
+                    error=str(e),
+                )
                 from forge.core.parser import ForgefileParser
                 parsed_fallback = ForgefileParser._parse_model_shorthand(model_config.fallback)
                 fallback_config = ModelConfig(

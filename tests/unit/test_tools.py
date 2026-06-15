@@ -3,8 +3,8 @@ import asyncio
 
 import pytest
 
-from forge.tools.registry import ToolRegistry
 from forge.tools.executor import ToolExecutor
+from forge.tools.registry import ToolRegistry
 from forge.tools.schema import ToolSchema
 
 

@@ -99,8 +99,16 @@ def register_tools(registry) -> None:
                     "description": "Operation to perform: read, write, list, delete, exists.",
                     "enum": ["read", "write", "list", "delete", "exists"],
                 },
-                "path": {"type": "string", "description": "File or directory path relative to the workspace.", "default": "."},
-                "content": {"type": "string", "description": "Content to write (for the write operation).", "default": ""},
+                "path": {
+                    "type": "string",
+                    "description": "File or directory path relative to the workspace.",
+                    "default": ".",
+                },
+                "content": {
+                    "type": "string",
+                    "description": "Content to write (for the write operation).",
+                    "default": "",
+                },
             },
             "required": ["operation"],
         },

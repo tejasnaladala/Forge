@@ -3,7 +3,6 @@ from __future__ import annotations
 import inspect
 from typing import Any, get_type_hints
 
-
 PYTHON_TO_JSON_TYPE = {
     str: "string",
     int: "integer",

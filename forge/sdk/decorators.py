@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import functools
-from typing import Any
 
 from forge.tools.schema import ToolSchema
 

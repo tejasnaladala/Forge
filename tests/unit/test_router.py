@@ -1,5 +1,7 @@
 """Tests for forge.models."""
-from forge.models.cost import CostTracker, COST_TABLE
+import pytest
+
+from forge.models.cost import COST_TABLE, CostTracker
 
 
 def test_cost_table_has_entries():
@@ -39,7 +41,3 @@ def test_cost_tracker_summary():
     assert summary["total_calls"] == 3
     assert "gpt-4o" in summary["by_model"]
     assert summary["by_model"]["gpt-4o"]["calls"] == 2
-
-
-# Need pytest import for approx
-import pytest

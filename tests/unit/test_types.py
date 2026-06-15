@@ -1,8 +1,18 @@
 """Tests for forge.core.types."""
-import pytest
 from forge.core.types import (
-    AgentConfig, AgentStatus, MemoryConfig, Message, ModelConfig, ModelProvider,
-    Session, Step, StepType, ToolCall, ToolConfig, ToolResult, ForgeEvent,
+    AgentConfig,
+    AgentStatus,
+    ForgeEvent,
+    MemoryConfig,
+    Message,
+    ModelConfig,
+    ModelProvider,
+    Session,
+    Step,
+    StepType,
+    ToolCall,
+    ToolConfig,
+    ToolResult,
 )
 
 

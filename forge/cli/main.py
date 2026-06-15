@@ -116,7 +116,10 @@ async def _run_agent(input_text, agent_name, model_override, forgefile):
             console.print(f"\n[green]{step.output}[/green]")
 
     # Summary
-    console.print(f"\n[dim]Cost: ${session.total_cost:.4f} | Tokens: {session.total_tokens} | Steps: {len(session.steps)}[/dim]")
+    console.print(
+        f"\n[dim]Cost: ${session.total_cost:.4f} | "
+        f"Tokens: {session.total_tokens} | Steps: {len(session.steps)}[/dim]"
+    )
 
 
 @cli.command()
@@ -129,6 +132,7 @@ def up(forgefile, port):
 
 async def _start_server(forgefile, port):
     import uvicorn
+
     from forge.api.app import create_app
     from forge.core.parser import ForgefileParser
     from forge.core.registry import AgentRegistry

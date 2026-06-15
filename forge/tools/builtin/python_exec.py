@@ -55,7 +55,10 @@ def _validate_code(code: str) -> str | None:
     # Check for dangerous patterns
     for pattern in _DANGEROUS_PATTERNS:
         if pattern.search(code):
-            return f"Blocked: dangerous pattern detected ({pattern.pattern}). This operation is not allowed in sandboxed mode."
+            return (
+                f"Blocked: dangerous pattern detected ({pattern.pattern}). "
+                "This operation is not allowed in sandboxed mode."
+            )
 
     return None
 

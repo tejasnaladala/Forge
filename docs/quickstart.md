@@ -16,7 +16,7 @@ This guide covers installing Forge, configuring a model provider, defining an ag
 ### From Source
 
 ```bash
-git clone https://github.com/nautilus4707/Forge.git
+git clone https://github.com/tejasnaladala/Forge.git
 cd Forge
 pip install -e ".[all]"
 ```

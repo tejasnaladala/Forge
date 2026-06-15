@@ -89,7 +89,7 @@ def create_app() -> FastAPI:
 
         return await call_next(request)
 
-    from forge.api.routes import health, agents, sessions, tools, models
+    from forge.api.routes import agents, health, models, sessions, tools
     from forge.api.ws import stream
 
     app.include_router(health.router)

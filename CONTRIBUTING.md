@@ -12,7 +12,7 @@ All contributors are expected to engage respectfully and constructively. Maintai
 
 ## Reporting Issues
 
-To report a bug or request a feature, open an issue on the [GitHub issue tracker](https://github.com/nautilus4707/Forge/issues). Include the following information:
+To report a bug or request a feature, open an issue on the [GitHub issue tracker](https://github.com/tejasnaladala/Forge/issues). Include the following information:
 
 - A clear, descriptive title.
 - Steps to reproduce the issue (for bugs).
@@ -34,7 +34,7 @@ To report a bug or request a feature, open an issue on the [GitHub issue tracker
 Clone the repository and install all dependencies, including development tools:
 
 ```bash
-git clone https://github.com/nautilus4707/Forge.git
+git clone https://github.com/tejasnaladala/Forge.git
 cd Forge
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate

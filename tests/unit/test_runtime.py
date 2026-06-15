@@ -1,10 +1,10 @@
 """Tests for forge.core.runtime."""
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from forge.core.runtime import AgentRuntime
-from forge.core.types import AgentConfig, MemoryConfig, ModelConfig, ModelProvider, StepType
+from forge.core.types import AgentConfig, MemoryConfig, ModelConfig, ModelProvider
 
 
 @pytest.fixture

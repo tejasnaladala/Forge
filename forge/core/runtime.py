@@ -105,7 +105,10 @@ class AgentRuntime:
             if session.total_cost >= self.config.cost_limit:
                 step = Step(
                     type=StepType.RESPOND,
-                    output=f"Cost limit reached (${session.total_cost:.2f} >= ${self.config.cost_limit:.2f}). Stopping.",
+                    output=(
+                        f"Cost limit reached (${session.total_cost:.2f} >= "
+                        f"${self.config.cost_limit:.2f}). Stopping."
+                    ),
                 )
                 session.steps.append(step)
                 session.status = AgentStatus.COMPLETED
