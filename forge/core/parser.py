@@ -4,12 +4,8 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from jinja2.sandbox import SandboxedEnvironment
 
 from forge.core.types import AgentConfig, MemoryConfig, ModelConfig, ModelProvider, ToolConfig
-
-_jinja_env = SandboxedEnvironment()
-
 
 PROVIDER_INFERENCE = {
     "gpt-": ModelProvider.OPENAI,
@@ -61,13 +57,21 @@ class ForgefileParser:
         return result
 
     def _parse_agent(self, raw: dict) -> AgentConfig:
+        legacy_policy_fields = {"allowed_tools", "blocked_tools"} & raw.keys()
+        if legacy_policy_fields:
+            fields = ", ".join(sorted(legacy_policy_fields))
+            raise ValueError(
+                f"Unsupported tool policy field(s): {fields}. "
+                "Declare the exact default-deny allowlist in tools."
+            )
+
         kwargs: dict[str, Any] = {
             "name": raw.get("name", "default"),
         }
 
         for field in ["description", "version", "max_iterations", "max_tool_calls_per_step",
                        "planning_enabled", "self_eval_enabled", "delegates", "supervisor",
-                       "allowed_tools", "blocked_tools", "cost_limit", "rate_limit", "tags", "metadata"]:
+                       "cost_limit", "rate_limit", "tags", "metadata"]:
             if field in raw:
                 kwargs[field] = raw[field]
 
@@ -96,10 +100,8 @@ class ForgefileParser:
                     raise ValueError(f"Path traversal not allowed in system_prompt file: directive: {prompt_path}")
                 if resolved.is_file():
                     prompt = resolved.read_text(encoding="utf-8")
-            if "{{" in prompt:
-                # Use sandboxed Jinja2 environment to prevent SSTI
-                template = _jinja_env.from_string(prompt)
-                prompt = template.render()
+            # System prompts are data, not executable templates. Keeping Jinja-like
+            # text literal removes the template-engine attack surface entirely.
         kwargs["system_prompt"] = prompt
 
         # Parse tools

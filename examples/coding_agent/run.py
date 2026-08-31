@@ -7,8 +7,11 @@ async def main():
     agent = Agent(
         "coder",
         model="ollama/qwen2.5-coder:7b",
-        tools=["shell", "python_exec", "file_ops"],
-        system_prompt="You are an expert Python developer. Write and test code, then save the final version.",
+        tools=["file_ops"],
+        system_prompt=(
+            "You are an expert Python developer. Draft code and save the proposed files. "
+            "Do not claim the code was executed or validated."
+        ),
         temperature=0.2,
         max_iterations=30,
     )

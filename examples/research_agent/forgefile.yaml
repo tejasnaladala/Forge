@@ -11,7 +11,6 @@ agent:
   tools:
     - web_search
     - web_fetch
-    - python_exec
     - file_ops
   temperature: 0.3
   cost_limit: 5.0

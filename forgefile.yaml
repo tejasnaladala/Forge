@@ -4,13 +4,12 @@ agent:
   # model: ollama/llama3.2:3b  # Uncomment for free local model
   system_prompt: |
     You are a helpful AI assistant. You can search the web,
-    fetch URLs, read/write files, and execute code.
+    fetch URLs, and read/write files in the Forge workspace.
     Be concise and helpful.
   tools:
     - web_search
     - web_fetch
     - file_ops
-    - python_exec
   cost_limit: 5.0
   memory:
     backend: sqlite

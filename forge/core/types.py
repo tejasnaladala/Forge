@@ -5,7 +5,9 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+from forge.tools.policy import DISABLED_HOST_EXECUTION_TOOLS, host_execution_disabled_message
 
 
 class AgentStatus(str, Enum):
@@ -95,12 +97,37 @@ class AgentConfig(BaseModel):
     self_eval_enabled: bool = False
     delegates: list[str] = Field(default_factory=list)
     supervisor: str | None = None
-    allowed_tools: list[str] | None = None
-    blocked_tools: list[str] = Field(default_factory=list)
     cost_limit: float = 10.0
     rate_limit: int = 60
     tags: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_legacy_tool_policy(cls, values: Any) -> Any:
+        if isinstance(values, dict) and ({"allowed_tools", "blocked_tools"} & values.keys()):
+            raise ValueError(
+                "allowed_tools and blocked_tools are no longer supported; "
+                "declare the exact allowlist in tools"
+            )
+        return values
+
+    @model_validator(mode="after")
+    def validate_tool_policy(self) -> AgentConfig:
+        names = [tool.name for tool in self.tools]
+        if len(names) != len(set(names)):
+            raise ValueError("Each tool may appear only once in an agent's tools allowlist")
+
+        disabled = sorted(set(names) & DISABLED_HOST_EXECUTION_TOOLS)
+        if disabled:
+            raise ValueError(host_execution_disabled_message(disabled[0]))
+
+        return self
+
+    @property
+    def authorized_tool_names(self) -> frozenset[str]:
+        """The one authoritative, default-deny tool allowlist for this agent."""
+        return frozenset(tool.name for tool in self.tools if tool.enabled)
 
 
 class ToolCall(BaseModel):

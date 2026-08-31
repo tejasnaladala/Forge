@@ -52,11 +52,6 @@ class ForgeSettings(BaseSettings):
     max_session_duration: int = 3600
     default_cost_limit: float = 10.0
 
-    # Tool security
-    sandbox_shell: bool = True
-    sandbox_python: bool = True
-    allowed_shell_commands: str = "ls,cat,head,tail,grep,find,wc,echo,pwd,date,whoami,curl,wget,git,python,pip,node,npm"
-
     def model_post_init(self, __context: object) -> None:
         # Load API keys from env without FORGE_ prefix
         if self.anthropic_api_key is None:
@@ -81,10 +76,5 @@ class ForgeSettings(BaseSettings):
     def get_cors_origins(self) -> list[str]:
         """Parse comma-separated CORS origins into a list."""
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
-
-    def get_allowed_shell_commands(self) -> set[str]:
-        """Parse comma-separated allowed shell commands into a set."""
-        return {c.strip() for c in self.allowed_shell_commands.split(",") if c.strip()}
-
 
 settings = ForgeSettings()
