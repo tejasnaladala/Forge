@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from forge.core.runtime import AgentRuntime
-from forge.core.types import AgentConfig, MemoryConfig, ModelConfig, ModelProvider
+from forge.core.types import AgentConfig, MemoryConfig, ModelConfig, ModelProvider, ToolCall, ToolConfig
 
 
 @pytest.fixture
@@ -71,6 +71,31 @@ async def test_run_returns_response(runtime, mock_router):
     response = await runtime.run(session.id, "What is 2+2?")
     assert response.content == "Hello! The answer is 4."
     assert response.role == "assistant"
+
+
+@pytest.mark.asyncio
+async def test_runtime_uses_declared_tools_for_schema_and_execution(
+    config, mock_router, mock_executor, mock_memory
+):
+    config.tools = [ToolConfig(name="file_ops")]
+    runtime = AgentRuntime(
+        config=config,
+        model_router=mock_router,
+        tool_executor=mock_executor,
+        memory_manager=mock_memory,
+    )
+    session = await runtime.create_session()
+
+    await runtime.run(session.id, "test")
+    mock_executor.get_tool_schemas.assert_called_once_with(authorized=frozenset({"file_ops"}))
+
+    await runtime._act(session, ToolCall(name="file_ops", arguments={"operation": "list"}))
+    mock_executor.execute.assert_awaited_once_with(
+        tool_name="file_ops",
+        arguments={"operation": "list"},
+        session_id=session.id,
+        authorized=frozenset({"file_ops"}),
+    )
 
 
 @pytest.mark.asyncio

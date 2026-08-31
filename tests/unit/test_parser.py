@@ -3,7 +3,7 @@
 import pytest
 
 from forge.core.parser import ForgefileParser
-from forge.core.types import ModelProvider
+from forge.core.types import AgentConfig, ModelProvider, ToolConfig
 
 
 @pytest.fixture
@@ -51,6 +51,32 @@ def test_parse_agent_with_tools(parser):
     config = parser._parse_agent(raw)
     assert len(config.tools) == 2
     assert config.tools[0].name == "web_search"
+
+
+def test_tools_are_the_only_authoritative_allowlist(parser):
+    config = parser._parse_agent({
+        "name": "test",
+        "tools": ["web_search", {"name": "file_ops", "enabled": False}],
+    })
+    assert config.authorized_tool_names == frozenset({"web_search"})
+
+
+@pytest.mark.parametrize("field", ["allowed_tools", "blocked_tools"])
+def test_legacy_tool_policy_fields_are_rejected(parser, field):
+    with pytest.raises(ValueError, match="exact default-deny allowlist"):
+        parser._parse_agent({"name": "test", "tools": [], field: []})
+
+    with pytest.raises(ValueError, match="no longer supported"):
+        AgentConfig(name="test", tools=[], **{field: []})
+
+
+@pytest.mark.parametrize("tool_name", ["shell", "python_exec"])
+def test_host_execution_tools_are_rejected_in_config(parser, tool_name):
+    with pytest.raises(ValueError, match="OS-level isolation"):
+        parser._parse_agent({"name": "test", "tools": [tool_name]})
+
+    with pytest.raises(ValueError, match="OS-level isolation"):
+        AgentConfig(name="test", tools=[ToolConfig(name=tool_name)])
 
 
 def test_parse_dict_single_agent(parser):

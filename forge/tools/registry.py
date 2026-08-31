@@ -3,6 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable
 
+from forge.exceptions import ToolDisabledError
+from forge.tools.policy import (
+    DISABLED_HOST_EXECUTION_TOOLS,
+    host_execution_disabled_message,
+    normalize_authorized_tools,
+)
+
 
 @dataclass
 class RegisteredTool:
@@ -27,6 +34,9 @@ class ToolRegistry:
         requires_approval: bool = False,
         timeout: int = 30,
     ) -> None:
+        if name in DISABLED_HOST_EXECUTION_TOOLS:
+            raise ToolDisabledError(host_execution_disabled_message(name))
+
         self._tools[name] = RegisteredTool(
             name=name,
             func=func,
@@ -44,15 +54,12 @@ class ToolRegistry:
 
     def get_schemas(
         self,
-        allowed: list[str] | None = None,
-        blocked: list[str] | None = None,
+        authorized: list[str] | set[str] | frozenset[str] | None = None,
     ) -> list[dict[str, Any]]:
-        blocked = blocked or []
+        authorized_names = normalize_authorized_tools(authorized)
         schemas = []
         for name, tool in self._tools.items():
-            if allowed is not None and name not in allowed:
-                continue
-            if name in blocked:
+            if name in DISABLED_HOST_EXECUTION_TOOLS or name not in authorized_names:
                 continue
             schemas.append(
                 {
@@ -70,13 +77,11 @@ class ToolRegistry:
         from forge.tools.builtin import (
             file_ops,
             http_request,
-            python_exec,
-            shell,
             web_fetch,
             web_search,
         )
 
-        for module in [web_search, web_fetch, file_ops, shell, python_exec, http_request]:
+        for module in [web_search, web_fetch, file_ops, http_request]:
             module.register_tools(self)
 
     def load_plugins(self, modules: list[str] | None = None, *, entry_points: bool = True) -> list[str]:

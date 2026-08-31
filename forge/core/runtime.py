@@ -39,6 +39,7 @@ class AgentRuntime:
         self.tool_executor = tool_executor
         self.memory_manager = memory_manager
         self.event_bus = event_bus or _default_event_bus
+        self._authorized_tools = config.authorized_tool_names
         self._sessions: dict[str, Session] = {}
 
     async def create_session(self, metadata: dict | None = None) -> Session:
@@ -187,10 +188,7 @@ class AgentRuntime:
 
         start = time.time()
         try:
-            tools = self.tool_executor.get_tool_schemas(
-                allowed=self.config.allowed_tools,
-                blocked=self.config.blocked_tools,
-            )
+            tools = self.tool_executor.get_tool_schemas(authorized=self._authorized_tools)
 
             response = await self.model_router.complete(
                 model_config=self.config.model,
@@ -261,6 +259,7 @@ class AgentRuntime:
                 tool_name=tool_call.name,
                 arguments=tool_call.arguments,
                 session_id=session.id,
+                authorized=self._authorized_tools,
             )
             duration_ms = (time.time() - start) * 1000
 

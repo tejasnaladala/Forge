@@ -72,13 +72,12 @@ agent:
   # model: ollama/llama3.2:3b  # Uncomment for local inference
   system_prompt: |
     You are a helpful AI assistant. You can search the web,
-    fetch URLs, read/write files, and execute code.
+    fetch URLs, and read/write files in the Forge workspace.
     Be concise and helpful.
   tools:
     - web_search
     - web_fetch
     - file_ops
-    - python_exec
   cost_limit: 5.0
   memory:
     backend: sqlite
@@ -145,11 +144,11 @@ agent:
 | `web_search` | Search the web using DuckDuckGo. |
 | `web_fetch` | Fetch and extract text content from a URL. |
 | `file_ops` | Read, write, list, and delete files. |
-| `shell` | Execute shell commands. |
-| `python_exec` | Execute Python code in a sandboxed environment. |
 | `http_request` | Send HTTP requests (GET, POST, PUT, DELETE). |
 
 Enable tools by name in the `tools` list within `forgefile.yaml`.
+
+The `tools` list is the agent's complete default-deny allowlist. Forge does not currently expose `shell` or `python_exec`: model-controlled host execution is disabled until a disposable OS-level sandbox exists, and there is no configuration bypass.
 
 ---
 

@@ -51,7 +51,10 @@ class Agent:
                     parameters=func._forge_tool_schema,
                 )
 
-        tool_configs = [ToolConfig(name=n) for n in builtin_tool_names]
+        custom_tool_names = [
+            func._forge_tool_name for func in custom_tools if hasattr(func, "_forge_tool_name")
+        ]
+        tool_configs = [ToolConfig(name=n) for n in builtin_tool_names + custom_tool_names]
 
         config = AgentConfig(
             name=name,
@@ -61,11 +64,6 @@ class Agent:
             max_iterations=max_iterations,
             cost_limit=cost_limit,
             memory=MemoryConfig(backend=memory_backend),
-            allowed_tools=(
-                builtin_tool_names
-                + [f._forge_tool_name for f in custom_tools if hasattr(f, "_forge_tool_name")]
-            )
-            or None,
             **kwargs,
         )
 

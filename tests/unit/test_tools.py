@@ -3,6 +3,7 @@ import asyncio
 
 import pytest
 
+from forge.exceptions import ToolAuthorizationError, ToolDisabledError
 from forge.tools.executor import ToolExecutor
 from forge.tools.registry import ToolRegistry
 from forge.tools.schema import ToolSchema
@@ -33,33 +34,38 @@ def test_tool_registry_load_builtins():
     assert "web_search" in tools
     assert "web_fetch" in tools
     assert "file_ops" in tools
-    assert "shell" in tools
-    assert "python_exec" in tools
     assert "http_request" in tools
-    assert len(tools) == 6
+    assert "shell" not in tools
+    assert "python_exec" not in tools
+    assert len(tools) == 4
 
 
 def test_tool_registry_get_schemas():
     registry = ToolRegistry()
     registry.load_builtins()
     schemas = registry.get_schemas()
-    assert len(schemas) == 6
-    assert all(s["type"] == "function" for s in schemas)
+    assert schemas == []
 
 
 def test_tool_registry_get_schemas_filtered():
     registry = ToolRegistry()
     registry.load_builtins()
-    schemas = registry.get_schemas(allowed=["web_search", "shell"])
+    schemas = registry.get_schemas(authorized=["web_search", "file_ops"])
     assert len(schemas) == 2
+    assert {schema["function"]["name"] for schema in schemas} == {"web_search", "file_ops"}
 
 
-def test_tool_registry_get_schemas_blocked():
+def test_tool_registry_rejects_disabled_host_execution_names():
     registry = ToolRegistry()
-    registry.load_builtins()
-    schemas = registry.get_schemas(blocked=["shell"])
-    assert len(schemas) == 5
-    assert all(s["function"]["name"] != "shell" for s in schemas)
+
+    async def dummy() -> str:
+        return "unsafe"
+
+    with pytest.raises(ToolDisabledError, match="OS-level isolation"):
+        registry.register("shell", dummy, "Unsafe", {})
+
+    with pytest.raises(ToolDisabledError, match="OS-level isolation"):
+        registry.register("python_exec", dummy, "Unsafe", {})
 
 
 def test_tool_schema_from_function():
@@ -80,8 +86,22 @@ async def test_tool_executor_simple():
         return f"echo: {text}"
     registry.register("echo", echo, "Echo tool", {})
     executor = ToolExecutor(registry)
-    result = await executor.execute("echo", {"text": "hello"})
+    result = await executor.execute("echo", {"text": "hello"}, authorized={"echo"})
     assert result == "echo: hello"
+
+
+@pytest.mark.asyncio
+async def test_tool_executor_is_default_deny():
+    registry = ToolRegistry()
+
+    async def echo(text: str) -> str:
+        return text
+
+    registry.register("echo", echo, "Echo tool", {})
+    executor = ToolExecutor(registry)
+
+    with pytest.raises(ToolAuthorizationError, match="not authorized"):
+        await executor.execute("echo", {"text": "fabricated direct call"})
 
 
 @pytest.mark.asyncio
@@ -89,7 +109,7 @@ async def test_tool_executor_not_found():
     registry = ToolRegistry()
     executor = ToolExecutor(registry)
     with pytest.raises(ValueError, match="Tool not found"):
-        await executor.execute("nonexistent", {})
+        await executor.execute("nonexistent", {}, authorized={"nonexistent"})
 
 
 @pytest.mark.asyncio
@@ -101,4 +121,4 @@ async def test_tool_executor_timeout():
     registry.register("slow", slow_tool, "Slow tool", {}, timeout=1)
     executor = ToolExecutor(registry)
     with pytest.raises(TimeoutError):
-        await executor.execute("slow", {})
+        await executor.execute("slow", {}, authorized={"slow"})

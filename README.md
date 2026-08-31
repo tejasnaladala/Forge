@@ -4,7 +4,7 @@ A runtime for defining and running AI agents that aren't tied to one model provi
 
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
-![Tests](https://img.shields.io/badge/tests-49%20passing-green.svg)
+![Tests](https://img.shields.io/badge/tests-70%20passing-green.svg)
 
 ## Why this exists
 
@@ -86,7 +86,9 @@ An agent runs a think/act loop: ask the model, run any tools it requested, feed 
 
 ### Built-in tools
 
-`web_search` (DuckDuckGo), `web_fetch`, `file_ops`, `shell`, `python_exec`, and `http_request`. The `shell` and `python_exec` tools run with guardrails; `python_exec` blocks a set of dangerous patterns before executing in a sandbox.
+`web_search` (DuckDuckGo), `web_fetch`, `file_ops`, and `http_request`. Each agent's `tools` list is the complete default-deny allowlist used for both model-visible schemas and execution authorization.
+
+Host `shell` and `python_exec` tools are disabled. Regexes, command allowlists, and a workspace directory do not provide process isolation, so Forge will not execute model-controlled code until a disposable OS sandbox with no host secrets or network access and strict resource limits is available. There is no unsafe opt-in switch.
 
 ### Custom tools
 
@@ -154,7 +156,7 @@ Interactive docs live at `http://localhost:8626/docs`; the dashboard runs on `ht
 
 ## Security
 
-The API is meant to be exposed, so it ships with API-key auth (constant-time comparison), CORS configured from an allowlist, per-client rate limiting, a request-size cap, and basic IP blocking. The `python_exec` and `file_ops` tools are scoped rather than open-ended.
+The API ships with API-key auth (constant-time comparison), CORS configured from an allowlist, per-client rate limiting, a request-size cap, and basic IP blocking. Tool access is default-deny per agent. `file_ops` remains confined to the Forge workspace; host Python and shell execution are unavailable pending real OS isolation.
 
 ## Project layout
 

@@ -84,7 +84,7 @@ async def _run_agent(input_text, agent_name, model_override, forgefile):
     )
 
     # Show info
-    tools_list = ", ".join(tool_registry.list_tools())
+    tools_list = ", ".join(sorted(config.authorized_tool_names)) or "none"
     console.print(Panel(
         f"[bold]Agent:[/bold] {config.name}\n"
         f"[bold]Model:[/bold] {config.model.provider.value}/{config.model.model}\n"
@@ -201,13 +201,12 @@ def init():
   # model: ollama/llama3.2:3b  # Uncomment for free local model
   system_prompt: |
     You are a helpful AI assistant. You can search the web,
-    fetch URLs, read/write files, and execute code.
+    fetch URLs, and read/write files in the Forge workspace.
     Be concise and helpful.
   tools:
     - web_search
     - web_fetch
     - file_ops
-    - python_exec
   cost_limit: 5.0
   memory:
     backend: sqlite

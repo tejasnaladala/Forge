@@ -44,6 +44,14 @@ class ToolTimeoutError(ToolError):
     pass
 
 
+class ToolAuthorizationError(ToolError):
+    pass
+
+
+class ToolDisabledError(ToolError):
+    pass
+
+
 class ForgeMemoryError(ForgeError):
     pass
 

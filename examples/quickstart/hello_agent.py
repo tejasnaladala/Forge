@@ -1,6 +1,9 @@
 """Quickstart: Run a simple Forge agent."""
+
 import asyncio
+
 from forge import Agent
+
 
 async def main():
     # Option 1: Local model (free, requires Ollama)
@@ -12,6 +15,7 @@ async def main():
     result = await agent.run("What is the meaning of life? Answer in one sentence.")
     print(f"Response: {result}")
     print(f"Cost: ${agent.cost:.4f}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
