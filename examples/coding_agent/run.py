@@ -1,7 +1,10 @@
 """Run the coding agent."""
+
 import asyncio
+
 from forge import Agent
 from forge.core.types import StepType
+
 
 async def main():
     agent = Agent(
@@ -16,12 +19,17 @@ async def main():
         max_iterations=30,
     )
 
-    async for step in agent.stream("Write a Python function that finds all prime numbers up to N using the Sieve of Eratosthenes. Test it with N=100."):
+    request = (
+        "Write a Python function that finds all prime numbers up to N using the "
+        "Sieve of Eratosthenes. Test it with N=100."
+    )
+    async for step in agent.stream(request):
         if step.type == StepType.TOOL_CALL:
             tool_info = step.input or {}
             print(f"[{tool_info.get('tool', '?')}]", end=" ")
         elif step.type == StepType.RESPOND:
             print(f"\n{step.output}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

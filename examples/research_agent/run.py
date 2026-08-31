@@ -1,7 +1,10 @@
 """Run the research agent with streaming output."""
+
 import asyncio
+
 from forge import Agent
 from forge.core.types import StepType
+
 
 async def main():
     agent = Agent(
@@ -23,6 +26,7 @@ async def main():
             print(f"\n{step.output}")
 
     print(f"\nTotal cost: ${agent.cost:.4f}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
